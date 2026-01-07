@@ -1,0 +1,16 @@
+version: '3.9'
+
+services:
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: portrait
+      POSTGRES_PASSWORD: portrait
+      POSTGRES_DB: portrait_studio
+    ports:
+      - '5432:5432'
+    volumes:
+      - portrait_db:/var/lib/postgresql/data
+
+volumes:
+  portrait_db:
