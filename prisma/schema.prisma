@@ -1,0 +1,109 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Project {
+  id        String   @id @default(uuid())
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  recipes Recipe[]
+  runs    Run[]
+  pinSet  PinSet?
+}
+
+model Recipe {
+  id            String   @id @default(uuid())
+  projectId     String
+  name          String
+  draftSpecJson Json
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  project  Project        @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  versions RecipeVersion[]
+}
+
+model RecipeVersion {
+  id                   String   @id @default(uuid())
+  recipeId             String
+  versionNumber        Int
+  specJson             Json
+  compiledPromptOpenAI String
+  compiledPromptGemini String
+  note                 String?
+  createdAt            DateTime @default(now())
+
+  recipe Recipe @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+}
+
+model Run {
+  id              String     @id @default(uuid())
+  projectId       String
+  recipeVersionId String?
+  provider        RunProvider
+  mode            RunMode
+  paramsJson      Json
+  status          RunStatus
+  error           String?
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  assets  Asset[]
+}
+
+model Asset {
+  id         String    @id @default(uuid())
+  runId      String
+  kind       AssetKind
+  mimeType   String
+  byteSize   Int
+  sha256     String
+  storageUrl String
+  width      Int?
+  height     Int?
+  createdAt  DateTime  @default(now())
+
+  run Run @relation(fields: [runId], references: [id], onDelete: Cascade)
+}
+
+model PinSet {
+  id              String  @id @default(uuid())
+  projectId       String  @unique
+  identityAssetId String?
+  wardrobeNotes   String?
+  lightingNotes   String?
+  updatedAt       DateTime @updatedAt
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+}
+
+enum RunProvider {
+  OPENAI
+  GEMINI
+}
+
+enum RunMode {
+  GENERATE
+  EDIT
+}
+
+enum RunStatus {
+  PENDING
+  RUNNING
+  SUCCEEDED
+  FAILED
+}
+
+enum AssetKind {
+  INPUT
+  OUTPUT
+  THUMB
+}
